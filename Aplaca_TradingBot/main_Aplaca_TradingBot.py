@@ -1,6 +1,6 @@
 # Importing the API and instantiating the REST client according to our keys
 from localconfig import config    #config Datei im Projekt  mit api key, secret key, paper url  (wird nicht mit gepusht)
-from Orders_erstellen import*   #andere Datei wo Order instanzen erstellt werden. diese gilt es dann auszuführen
+from Daten import*   #andere Datei wo Order instanzen erstellt werden. diese gilt es dann auszuführen
 import alpaca_trade_api as tradeapi
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import* # MarketOrderRequest, OrderRequest
@@ -8,10 +8,10 @@ from alpaca.trading.enums import* # OrderSide, TimeInForce
 from alpaca.data.requests import*
 import yfinance as yf
 import pandas as pd
-import json
 import numpy as np
+import json
 from alpaca.data.live import*
-
+import time
 
 
 trading_client = TradingClient(config['API_KEY'], config['SECRET_KEY'], paper=True)
@@ -22,6 +22,7 @@ api = tradeapi.REST(config['API_KEY'], config['SECRET_KEY'], config['paper_url']
 # Getting account information and printing it
 account = trading_client.get_account()
 for property_name, value in account:
+  print("test")
   #print(f"\"{property_name}\": {value}")
 
 
@@ -34,87 +35,103 @@ for property_name, value in account:
 #   print(f"\"{property_name}\": {value}")
 
 
+print(apple_df.iloc[len(apple_df)-1])
 
-#Implementierung vom 200DMA von apple
-    ticker = 'AAPl'
-
-data = yf.download(ticker, period= "1y")  # Letzten 12 Monate anschauen
-
-data_200DMA = data['Close'].rolling(window=200).mean()  # Arithmetisches Mittel von den letzten 50 close daten bilden
-
-data_200DMA.index = data_200DMA.index.strftime('%Y-%m-%d') #ins Datetime format bringen
-
-moving_averages_200DMA = data_200DMA.to_dict() # in Dict umwandeln
-
-with open('moving_averages_200DMA.json', 'w') as file:                                               #json erstellen
-    file.write(json.dumps(moving_averages_200DMA, indent=4, sort_keys=True, default=str))
+df_update(apple_df)
+df_update(tesla_df)
+df_update(microsoft_df)
+df_update(nvidia_df)
+df_update(meta_df)
+df_update(google_df)
 
 
 
-
-#Implentierung von 50 DMA von apple
-data = yf.download(ticker, period= "3mo")  # Letzten 3 Monate anschauen
-
-data_50DMA = data['Close'].rolling(window=50).mean()  # Arithmetisches Mittel von den letzten 50 close daten bilden
-
-data_50DMA.index = data_50DMA.index.strftime('%Y-%m-%d') #ins Datetime format bringen
-
-moving_averages_50DMA = data_50DMA.to_dict() # in Dict umwandeln
-
-with open('moving_averages_50DMA.json', 'w') as file:                                               #json erstellen
-    file.write(json.dumps(moving_averages_50DMA, indent=4, sort_keys=True, default=str))
+def check_signals(df):
+    while True:
+        #df muss neu generiert + neu updatet werden, oder die jsons müssen alle 24h neu erstellt werden
+        #df_create()
+        #df_update()
 
 
+        # Kontrolliert ob 'Buy' in der Spalte Signal ist und ob es der letzte Eintrag(und somit der aktuellste) ist
+        if 'Buy' in df['Signal'] and 'Buy' in df.iloc[len(df)-1]:
+            if df == apple_df:
+              trading_client.submit_order(order_apple_buy)
 
-common_dates = set(moving_averages_50DMA.keys()).intersection(set(moving_averages_200DMA.keys()))
+            elif df == tesla_df:
+              trading_client.submit_order(order_tesla_buy)
 
-# Extract the values for the common dates, excluding NaN values
-value50DMA = [moving_averages_50DMA[date] for date in common_dates if not np.isnan(moving_averages_50DMA[date])]
-value200DMA = [moving_averages_200DMA[date] for date in common_dates if not np.isnan(moving_averages_200DMA[date])]
-value200DMA = value200DMA[-len(value50DMA):]
+            elif df == microsoft_df:
+              trading_client.submit_order(order_microsoft_buy) 
 
-print(value50DMA)
-print(len(value50DMA))
+            elif df == nvidia_df:
+              trading_client.submit_order(order_nvidia_buy)
 
-print(value200DMA)
-print(len(value200DMA))
+            elif df == meta_df:
+              trading_client.submit_order(order_meta_buy)
 
+            elif df == google_df:
+              trading_client.submit_order(order_google_buy)
 
-
-
-df = pd.DataFrame({'50DMA': value50DMA, '200DMA': value200DMA})
-
-print(df)
+            else:
+               continue   
 
 
-# Initialize trading parameters
-short_period = 50
-long_period = 200
-current_status = "neutral"
-trading_signals = []
+        # Kontrolliert ob 'Sell' in der Spalte Signal ist und ob es der letzte Eintrag(und somit der aktuellste) ist
+        if 'Sell' in df['Signal'] and 'Sell' in df.iloc[len(df)-1]:
+            if df == apple_df:
+              trading_client.submit_order(order_apple_sell)
 
-# Iterate through the historical data
-for i in range(0, len(df)):
-    if df['50DMA'].iloc[i] > df['200DMA'].iloc[i] and current_status == "neutral":
-        trading_signals.append("Buy")
-        current_status = "long"
-    elif df['50DMA'].iloc[i] < df['200DMA'].iloc[i] and current_status == "long":
-        trading_signals.append("Sell")
-        current_status = "neutral"
-    elif df['50DMA'].iloc[i] < df['200DMA'].iloc[i] and current_status == "neutral":
-        trading_signals.append("Sell")
-        current_status = "short"
-    elif df['50DMA'].iloc[i] > df['200DMA'].iloc[i] and current_status == "short":
-        trading_signals.append("Buy")
-        current_status = "neutral"
-    else:
-        trading_signals.append("Hold")
+            elif df == tesla_df:
+              trading_client.submit_order(order_tesla_sell)
 
-# Add the trading signals to the DataFrame
-df['Signal'] = trading_signals
+            elif df == microsoft_df:
+              trading_client.submit_order(order_microsoft_sell) 
 
-print(df)
+            elif df == nvidia_df:
+              trading_client.submit_order(order_nvidia_sell)
+
+            elif df == meta_df:
+              trading_client.submit_order(order_meta_sell)
+
+            elif df == google_df:
+              trading_client.submit_order(order_google_sell)
+
+            else:
+               continue
+
+
+        # Abfrage wieder in 24 Stunden, sobald DMA neue Daten hat
+        time.sleep(24 * 60 * 60)
+
+
+
+check_signals(apple_df)
 
 
 
 
+
+################### gilt zu testen 
+# import time
+
+# def check_signals(df):
+#     previous_df = df.copy()  # Make a copy of the DataFrame to compare changes
+
+#     while True:
+#         # Check for changes in the DataFrame
+#         if not df.equals(previous_df):
+#             print("Change detected!")
+#             # Perform actions when a change occurs
+
+#             # Update the previous_df to the new DataFrame state
+#             previous_df = df.copy()
+
+#         # Delay for a specific time before checking again
+#         time.sleep(60)  # Sleep for 60 seconds (adjust as needed)
+
+# # Call df_create() and store the returned DataFrame in a variable
+# df = df_create()
+
+# # Call check_signals() function
+# check_signals(df)
