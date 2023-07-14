@@ -1,6 +1,6 @@
 ### localconfig Template damit der BOT funktioniert ###
 config = {
   'API_KEY': 'API-KEY'
-  'API_SECRET': 'API-SECRET'
+  'SECRET_KEY': 'API-SECRET'
   'paper_url': 'paper-url'
 }
