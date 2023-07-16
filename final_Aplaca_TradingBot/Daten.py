@@ -208,25 +208,3 @@ def df_update(df):                              #Argument ist das entsprechende 
     print(df)
     return df
 
-
-
-
-
-#Versuch von Custom Käufen außerhalb unserer 6 Standard methoden
-
-from typing import Literal
-
-class MarketOrderRequest:
-    def __init__(self, symbol: str, qty: int, side: Literal['buy', 'sell'], time_in_force: Literal['GTC', 'IOC', 'FOK']):
-        self.symbol = symbol
-        self.qty = qty
-        self.side = side
-        self.time_in_force = time_in_force
-
-def custom_order(symbol: str, qty: int, side: Literal['buy', 'sell'], time_in_force: Literal['GTC', 'IOC', 'FOK']):
-    order = MarketOrderRequest(
-        symbol=symbol,
-        qty=qty,
-        side=side,
-        time_in_force=time_in_force
-    )

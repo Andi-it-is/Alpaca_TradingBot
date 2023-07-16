@@ -69,10 +69,6 @@ def check_stock(ticker : str):
         trading_client.submit_order(order_google_buy)
 
 
-      else:
-        print("Order nicht möglich, verwende Custome_order()")
-
-
 
   # Kontrolliert ob 'Sell' in der Spalte Signal ist und ob es der letzte Eintrag(und somit der aktuellste) ist
   if 'Sell' in df['Signal'] and 'Sell' in df.iloc[len(df)-1]:
@@ -126,14 +122,5 @@ def run_script():
 
 ### Starter ###
 run_script()
-
-
-
-
-
-
-
-
-
 
 
